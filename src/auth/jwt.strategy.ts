@@ -11,7 +11,7 @@ type ExportAuthRepositoryContract = {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly configService: ConfigService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject('EXPORT_AUTH_REPOSITORY') private readonly authRepository: ExportAuthRepositoryContract,
   ) {
     super({

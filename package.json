@@ -5,9 +5,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "tsc --noEmit --incremental false --declaration false --sourceMap false",
-    "start": "tsx src/main.ts",
-    "start:dev": "tsx watch src/main.ts",
-    "start:debug": "tsx --inspect src/main.ts",
+    "start": "node -r ts-node/register/transpile-only src/main.ts",
+    "start:dev": "ts-node --project tsconfig.json --transpile-only --watch src/main.ts",
+    "start:debug": "node --inspect -r ts-node/register/transpile-only src/main.ts",
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "test": "jest --runInBand",
     "test:watch": "jest --watch"
