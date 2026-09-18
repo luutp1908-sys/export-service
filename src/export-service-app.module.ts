@@ -38,16 +38,6 @@ import { QueueModule } from './queue/queue.module';
         level: process.env.LOG_LEVEL ?? 'warn',
         autoLogging: false,
         quietReqLogger: true,
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? {
-                target: 'pino-pretty',
-                options: {
-                  colorize: true,
-                  singleLine: true,
-                },
-              }
-            : undefined,
         redact: ['req.headers.authorization'],
       },
     }),

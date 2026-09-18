@@ -20,6 +20,7 @@ import { ExportAuthModule } from './auth';
       pinoHttp: {
         autoLogging: false,
         quietReqLogger: true,
+        redact: ['req.headers.authorization'],
       },
     }),
     DatabaseModule,

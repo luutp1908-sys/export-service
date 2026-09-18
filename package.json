@@ -4,10 +4,10 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
-    "start": "node dist/main",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "build": "tsc --noEmit --incremental false --declaration false --sourceMap false",
+    "start": "tsx src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "start:debug": "tsx --inspect src/main.ts",
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "test": "jest --runInBand",
     "test:watch": "jest --watch"
@@ -59,6 +59,7 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.5.4"
   },
   "jest": {
