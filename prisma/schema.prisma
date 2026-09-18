@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Export {
+  id               String    @id @default(uuid()) @db.Uuid
+  requestedByUserId String?   @db.Uuid
+  workspaceId      String?   @db.Uuid
+  draftId          String?   @db.Uuid
+  templateId       String?   @db.Uuid
+  format           String    @default("pdf") @db.VarChar(20)
+  status           String    @default("pending") @db.VarChar(30)
+  fileName         String    @db.VarChar(255)
+  downloadPath     String?   @db.VarChar(2048)
+  content          Json
+  errorMessage     String?   @db.VarChar(1000)
+  attemptCount     Int       @default(0)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([requestedByUserId])
+  @@index([workspaceId])
+  @@index([status])
+  @@index([createdAt])
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "export-service",
+  "projectType": "application",
+  "sourceRoot": "apps/export-service/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/export-service",
+        "main": "apps/export-service/src/main.ts",
+        "tsConfig": "apps/export-service/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "start": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "export-service:build"
+      }
+    },
+    "start-dev": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "export-service:build",
+        "watch": true
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint \"apps/export-service/src/**/*.ts\" --fix"
+      }
+    }
+  }
+}
