@@ -8,9 +8,12 @@ import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { bootstrapOpenTelemetry, shutdownOpenTelemetry } from './common/telemetry/otel.bootstrap';
 import { ExportServiceAppModule } from './export-service-app.module';
 
 async function bootstrap(): Promise<void> {
+  bootstrapOpenTelemetry();
+
   const app = await NestFactory.create(ExportServiceAppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   app.use(helmet());
@@ -104,10 +107,13 @@ async function bootstrap(): Promise<void> {
     },
   });
 
-  const port = config.get<number>('app.port', 4100);
+  const port = config.get<number>('app.port', 4101);
   app.use(cookieParser());
   app.enableShutdownHooks();
   await app.listen(port);
+
+  const logger = app.get(Logger);
+  logger.log(`Export service is running on port ${port}`);
 }
 
 void bootstrap();

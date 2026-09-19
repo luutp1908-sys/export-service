@@ -42,6 +42,7 @@ export class ExportController {
     @CurrentUser() user: AuthUser,
     @Req() req: Request,
   ): Promise<ExportEntity> {
+    console.log('[debug] export controller')
     const requestId = (req.headers['x-request-id'] as string | undefined) ?? undefined;
     return this.service.createJob(payload, user.id, requestId);
   }

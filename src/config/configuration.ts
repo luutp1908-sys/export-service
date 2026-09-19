@@ -2,7 +2,7 @@ export default () => ({
   app: {
     nodeEnv: process.env.NODE_ENV ?? 'development',
     name: process.env.APP_NAME ?? 'template-saas-backend',
-    port: Number(process.env.PORT ?? 4000),
+    port: Number(process.env.PORT ?? 4101),
     apiPrefix: process.env.API_PREFIX ?? 'api',
     swaggerPath: process.env.SWAGGER_PATH ?? 'docs',
     trustProxy: Number(process.env.TRUST_PROXY ?? 0),
