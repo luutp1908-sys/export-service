@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateExportDto } from './dto/create-export.dto';
@@ -19,26 +19,6 @@ export class ExportRepository {
   }
 
   async create(payload: CreateExportDto, userId: string): Promise<ExportEntity> {
-    if (payload.workspaceId) {
-      const workspace = await (this.prisma as any).workspace.findUnique({
-        where: { id: payload.workspaceId },
-      });
-
-      if (!workspace) {
-        throw new BadRequestException(`Invalid workspaceId: ${payload.workspaceId}`);
-      }
-    }
-
-    if (payload.templateId) {
-      const template = await (this.prisma as any).template.findUnique({
-        where: { id: payload.templateId },
-      });
-
-      if (!template) {
-        throw new BadRequestException(`Invalid templateId: ${payload.templateId}`);
-      }
-    }
-
     const exportJob = await (this.prisma as any).export.create({
       data: {
         requestedByUserId: userId,

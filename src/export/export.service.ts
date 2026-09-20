@@ -69,9 +69,17 @@ export class ExportService {
   }
 
   async createJob(payload: CreateExportDto, userId: string, requestId?: string): Promise<ExportEntity> {
+    this.logger.warn({ payload, userId, requestId }, 'export.createJob.start');
     await this.assertQueueSubmissionReady();
 
-    const created = await this.repository.create(payload, userId);
+    let created: ExportEntity;
+    try {
+      created = await this.repository.create(payload, userId);
+      this.logger.warn({ exportId: created.id, userId, requestId }, 'export.createJob.repository.success');
+    } catch (error) {
+      this.logger.error({ err: error, payload, userId, requestId }, 'export.createJob.repository.failed');
+      throw error;
+    }
 
     this.logger.log(
       enrichWithTraceContext({

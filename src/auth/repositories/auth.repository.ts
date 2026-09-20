@@ -24,67 +24,17 @@ type AuthUserRecord = {
 export class ExportAuthRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAuthUserById(id: string): Promise<AuthUser | null> {
-    const user = (await (this.prisma as any).user.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-        isActive: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        displayName: true,
-        userRoles: {
-          where: {
-            role: {
-              deletedAt: null,
-            },
-          },
-          select: {
-            role: {
-              select: {
-                key: true,
-                rolePermissions: {
-                  where: {
-                    permission: {
-                      deletedAt: null,
-                    },
-                  },
-                  select: {
-                    permission: {
-                      select: {
-                        key: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    })) as AuthUserRecord | null;
-
-    if (!user) {
+  async findAuthUserById(id: string, email?: string): Promise<AuthUser | null> {
+    if (!id) {
       return null;
     }
 
-    const roles = [...new Set(user.userRoles.map((ur: AuthUserRoleRecord) => ur.role.key))] as string[];
-    const permissions = [
-      ...new Set(
-        user.userRoles.flatMap((ur: AuthUserRoleRecord) =>
-          ur.role.rolePermissions.map((rp) => rp.permission.key),
-        ),
-      ),
-    ] as string[];
-
     return {
-      id: user.id,
-      email: user.email,
-      displayName: user.displayName,
-      roles,
-      permissions,
+      id,
+      email: email ?? '',
+      displayName: null,
+      roles: [],
+      permissions: [],
     };
   }
 }

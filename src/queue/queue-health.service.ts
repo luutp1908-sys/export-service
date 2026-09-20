@@ -70,7 +70,24 @@ export class QueueHealthService {
       await queue.waitUntilReady();
       const jobCounts = await queue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed');
       const workers = this.workerHealthRegistry.snapshot(staleAfterMs);
-      const workersHealthy = workers.length > 0 && workers.every((worker) => worker.healthy);
+
+      if (workers.length === 0) {
+        return {
+          required: false,
+          enabled,
+          healthy: true,
+          status: 'skipped',
+          reason: 'Queue is reachable but no worker heartbeat has started yet',
+          details: {
+            queueName: this.queueName,
+            jobCounts,
+            workers,
+            staleAfterMs,
+          },
+        };
+      }
+
+      const workersHealthy = workers.every((worker) => worker.healthy);
 
       return {
         required: true,
