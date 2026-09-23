@@ -9,6 +9,14 @@ import { OutboxRepository } from './outbox.repository.prisma';
 export class OutboxDispatcherService {
   private readonly queueName = 'pdf-export';
   private readonly maxDispatchAttempts = Number(process.env.OUTBOX_MAX_RETRY_ATTEMPTS ?? 3);
+  private readonly metrics = {
+    scanned: 0,
+    dispatched: 0,
+    published: 0,
+    duplicate: 0,
+    failed: 0,
+    deadLettered: 0,
+  };
 
   constructor(
     private readonly outboxRepository: OutboxRepository,
@@ -18,20 +26,70 @@ export class OutboxDispatcherService {
 
   async dispatchPending(limit = 50): Promise<number> {
     const pending = await this.outboxRepository.findPending(limit);
+    this.metrics.scanned += pending.length;
+
     if (pending.length === 0) {
+      this.logger.log({ module: 'outbox', operation: 'dispatch.scan', scanned: this.metrics.scanned }, 'outbox.dispatch.scan');
       return 0;
     }
 
     let dispatched = 0;
 
     for (const event of pending) {
+      this.logger.log(
+        {
+          module: 'outbox',
+          operation: 'dispatch.pickup',
+          eventId: event.id,
+          aggregateId: event.aggregateId,
+          eventType: event.eventType,
+          attempts: event.attempts,
+        },
+        'outbox.dispatch.pickup',
+      );
+
       const wasPublished = await this.dispatchEvent(event);
       if (wasPublished) {
         dispatched += 1;
       }
     }
 
+    this.metrics.dispatched += dispatched;
+    this.logger.log(
+      {
+        module: 'outbox',
+        operation: 'dispatch.batch_summary',
+        scanned: pending.length,
+        dispatched,
+        metrics: { ...this.metrics },
+      },
+      'outbox.dispatch.batch_summary',
+    );
+
     return dispatched;
+  }
+
+  getMetricsSnapshot(): Readonly<typeof this.metrics> {
+    return { ...this.metrics };
+  }
+
+  private recordLifecycle(event: 'published' | 'duplicate' | 'failed' | 'dead_lettered'): void {
+    if (event === 'published') {
+      this.metrics.published += 1;
+      return;
+    }
+
+    if (event === 'duplicate') {
+      this.metrics.duplicate += 1;
+      return;
+    }
+
+    if (event === 'dead_lettered') {
+      this.metrics.deadLettered += 1;
+      return;
+    }
+
+    this.metrics.failed += 1;
   }
 
   private isDuplicateJobError(error: unknown, exportId: string): boolean {
@@ -73,6 +131,7 @@ export class OutboxDispatcherService {
               },
               'outbox.dispatch.skip_duplicate',
             );
+            this.recordLifecycle('duplicate');
             await this.outboxRepository.markPublished(event.id);
             return true;
           }
@@ -106,6 +165,7 @@ export class OutboxDispatcherService {
               },
               'outbox.dispatch.skip_duplicate_add',
             );
+            this.recordLifecycle('duplicate');
             await this.outboxRepository.markPublished(event.id);
             return true;
           }
@@ -115,6 +175,7 @@ export class OutboxDispatcherService {
       }
 
       await this.outboxRepository.markPublished(event.id);
+      this.recordLifecycle('published');
       this.logger.log(
         {
           module: 'outbox',
@@ -122,6 +183,7 @@ export class OutboxDispatcherService {
           eventId: event.id,
           aggregateId: event.aggregateId,
           eventType: event.eventType,
+          metrics: { ...this.metrics },
         },
         'outbox.dispatch.success',
       );
@@ -130,6 +192,7 @@ export class OutboxDispatcherService {
       const message = error instanceof Error ? error.message : 'Outbox dispatch failed';
 
       if (attemptsAfterPublish >= this.maxDispatchAttempts) {
+        this.recordLifecycle('dead_lettered');
         await this.outboxRepository.markDeadLettered(event.id, message);
         this.logger.error(
           {
@@ -140,12 +203,14 @@ export class OutboxDispatcherService {
             eventType: event.eventType,
             attempts: attemptsAfterPublish,
             err: error,
+            metrics: { ...this.metrics },
           },
           'outbox.dispatch.dead_lettered',
         );
         return false;
       }
 
+      this.recordLifecycle('failed');
       await this.outboxRepository.markFailed(event.id, message);
       this.logger.error(
         {
@@ -156,6 +221,7 @@ export class OutboxDispatcherService {
           eventType: event.eventType,
           attempts: attemptsAfterPublish,
           err: error,
+          metrics: { ...this.metrics },
         },
         'outbox.dispatch.failed',
       );

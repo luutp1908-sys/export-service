@@ -74,4 +74,31 @@ describe('OutboxDispatcherService', () => {
     expect(outboxRepository.markDeadLettered).toHaveBeenCalledWith(event.id, expect.stringContaining('Redis unavailable'));
     expect(outboxRepository.markFailed).not.toHaveBeenCalled();
   });
+
+  it('tracks a metrics snapshot for the dispatch lifecycle', async () => {
+    const outboxRepository: any = {
+      findPending: jest.fn(async () => []),
+      markPublishing: jest.fn(async () => ({})),
+      markPublished: jest.fn(async () => ({})),
+      markFailed: jest.fn(async () => ({})),
+      markDeadLettered: jest.fn(async () => ({})),
+    };
+
+    const exportQueue: any = {
+      getJob: jest.fn(async () => null),
+      add: jest.fn(async () => ({})),
+    };
+
+    const logger: any = { log: jest.fn(), error: jest.fn() };
+    const service = new OutboxDispatcherService(outboxRepository, exportQueue, logger);
+
+    await service.dispatchPending(10);
+    const metrics = service.getMetricsSnapshot();
+
+    expect(metrics.scanned).toBe(0);
+    expect(metrics.dispatched).toBe(0);
+    expect(metrics.published).toBe(0);
+    expect(metrics.failed).toBe(0);
+    expect(metrics.deadLettered).toBe(0);
+  });
 });
