@@ -30,6 +30,17 @@ export class ExportRepository {
     );
   }
 
+  async createWithOutbox(payload: CreateExportDto, userId: string, requestId?: string): Promise<ExportEntity> {
+    const exportJob = await this.create(payload, userId);
+    return {
+      ...exportJob,
+      createdAt: exportJob.createdAt,
+      updatedAt: exportJob.updatedAt,
+      errorMessage: exportJob.errorMessage,
+      requestId,
+    } as ExportEntity & { requestId?: string };
+  }
+
   async findById(id: string, userId?: string): Promise<ExportEntity | null> {
     const exportJob = this.store.findById(id);
     if (!exportJob) {

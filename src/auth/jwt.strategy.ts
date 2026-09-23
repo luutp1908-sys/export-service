@@ -5,7 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthUser, JwtClaims } from './types/auth-user.type';
 
 type ExportAuthRepositoryContract = {
-  findAuthUserById(userId: string): Promise<AuthUser | null>;
+  findAuthUserById(userId: string, email?: string): Promise<AuthUser | null>;
 };
 
 @Injectable()

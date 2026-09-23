@@ -70,11 +70,10 @@ export class ExportService {
 
   async createJob(payload: CreateExportDto, userId: string, requestId?: string): Promise<ExportEntity> {
     this.logger.warn({ payload, userId, requestId }, 'export.createJob.start');
-    await this.assertQueueSubmissionReady();
 
     let created: ExportEntity;
     try {
-      created = await this.repository.create(payload, userId);
+      created = await this.repository.createWithOutbox(payload, userId, requestId);
       this.logger.warn({ exportId: created.id, userId, requestId }, 'export.createJob.repository.success');
     } catch (error) {
       this.logger.error({ err: error, payload, userId, requestId }, 'export.createJob.repository.failed');
@@ -83,52 +82,15 @@ export class ExportService {
 
     this.logger.log(
       enrichWithTraceContext({
-        module: 'queue',
-        operation: 'export.enqueue',
+        module: 'outbox',
+        operation: 'export.created',
         queue: this.queueName,
         exportId: created.id,
         userId,
         requestId,
-      }),      'queue.enqueue.attempt',
+      }),
+      'outbox.event.recorded',
     );
-
-    try {
-      const enqueueOptions: JobsOptions = {
-        ...this.getExportJobOptions(),
-        jobId: created.id,
-      };
-
-      const job = await this.exportQueue.add(
-        this.queueName,
-        { exportId: created.id, requestId },
-        enqueueOptions,
-      );
-
-      this.logger.log(
-        enrichWithTraceContext({
-          module: 'queue',
-          operation: 'export.enqueue',
-          queue: this.queueName,
-          exportId: created.id,
-          userId,
-          requestId,
-          jobId: job.id,
-        }),        'queue.enqueue.success',
-      );
-    } catch (error) {
-      this.logger.error(
-        enrichWithTraceContext({
-          module: 'queue',
-          operation: 'export.enqueue',
-          queue: this.queueName,
-          exportId: created.id,
-          userId,
-          requestId,
-          err: error instanceof Error ? error : undefined,
-        }),        'queue.enqueue.failed',
-      );
-      throw new ServiceUnavailableException('Export queue is unavailable');
-    }
 
     return created;
   }

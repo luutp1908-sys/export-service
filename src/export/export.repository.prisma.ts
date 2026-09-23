@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { OutboxStatus, OUTBOX_EVENT_TYPES } from '../outbox/outbox-event.entity';
 import { CreateExportDto } from './dto/create-export.dto';
 import { ExportEntity, ExportStatus } from './export.entity';
 
@@ -33,6 +34,44 @@ export class ExportRepository {
     });
 
     return exportJob as unknown as ExportEntity;
+  }
+
+  async createWithOutbox(payload: CreateExportDto, userId: string, requestId?: string): Promise<ExportEntity> {
+    return (this.prisma as any).$transaction(async (tx: any) => {
+      const exportJob = await tx.export.create({
+        data: {
+          requestedByUserId: userId,
+          workspaceId: payload.workspaceId ?? null,
+          draftId: payload.draftId ?? null,
+          templateId: payload.templateId ?? null,
+          format: payload.format,
+          status: ExportStatus.PENDING,
+          fileName: this.toPdfFileName(payload.templateName),
+          content: payload.content as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.outboxEvent.create({
+        data: {
+          aggregateType: 'export',
+          aggregateId: exportJob.id,
+          eventType: OUTBOX_EVENT_TYPES.EXPORT_JOB_CREATED,
+          status: OutboxStatus.PENDING,
+          attempts: 0,
+          payload: {
+            requestId,
+            userId,
+            format: payload.format,
+            templateName: payload.templateName,
+            workspaceId: payload.workspaceId,
+            draftId: payload.draftId,
+            templateId: payload.templateId,
+          },
+        },
+      });
+
+      return exportJob as unknown as ExportEntity;
+    });
   }
 
   async findById(id: string, userId?: string): Promise<ExportEntity | null> {
