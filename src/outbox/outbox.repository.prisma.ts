@@ -29,10 +29,16 @@ export class OutboxRepository {
     return record as OutboxEventEntity;
   }
 
-  async findPending(limit = 50): Promise<OutboxEventEntity[]> {
+  async findPending(limit = 50, maxAttempts = 5): Promise<OutboxEventEntity[]> {
     const rows = await (this.prisma as any).outboxEvent.findMany({
       where: {
-        status: OutboxStatus.PENDING,
+        OR: [
+          { status: OutboxStatus.PENDING },
+          {
+            status: OutboxStatus.FAILED,
+            attempts: { lt: maxAttempts },
+          },
+        ],
       },
       orderBy: {
         createdAt: 'asc',
@@ -73,6 +79,18 @@ export class OutboxRepository {
       where: { id },
       data: {
         status: OutboxStatus.FAILED,
+        errorMessage,
+      },
+    });
+
+    return row as OutboxEventEntity | null;
+  }
+
+  async markDeadLettered(id: string, errorMessage: string): Promise<OutboxEventEntity | null> {
+    const row = await (this.prisma as any).outboxEvent.update({
+      where: { id },
+      data: {
+        status: OutboxStatus.DEAD_LETTERED,
         errorMessage,
       },
     });

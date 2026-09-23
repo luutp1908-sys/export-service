@@ -8,6 +8,7 @@ import { OutboxRepository } from './outbox.repository.prisma';
 @Injectable()
 export class OutboxDispatcherService {
   private readonly queueName = 'pdf-export';
+  private readonly maxDispatchAttempts = Number(process.env.OUTBOX_MAX_RETRY_ATTEMPTS ?? 3);
 
   constructor(
     private readonly outboxRepository: OutboxRepository,
@@ -47,8 +48,11 @@ export class OutboxDispatcherService {
   }
 
   private async dispatchEvent(event: OutboxEventEntity): Promise<boolean> {
+    let attemptsAfterPublish = event.attempts + 1;
+
     try {
-      await this.outboxRepository.markPublishing(event.id);
+      const publishingState = await this.outboxRepository.markPublishing(event.id);
+      attemptsAfterPublish = Number(publishingState?.attempts ?? attemptsAfterPublish);
 
       if (event.eventType === OUTBOX_EVENT_TYPES.EXPORT_JOB_CREATED) {
         const payload = event.payload as Record<string, unknown>;
@@ -124,6 +128,24 @@ export class OutboxDispatcherService {
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Outbox dispatch failed';
+
+      if (attemptsAfterPublish >= this.maxDispatchAttempts) {
+        await this.outboxRepository.markDeadLettered(event.id, message);
+        this.logger.error(
+          {
+            module: 'outbox',
+            operation: 'dispatch.dead_lettered',
+            eventId: event.id,
+            aggregateId: event.aggregateId,
+            eventType: event.eventType,
+            attempts: attemptsAfterPublish,
+            err: error,
+          },
+          'outbox.dispatch.dead_lettered',
+        );
+        return false;
+      }
+
       await this.outboxRepository.markFailed(event.id, message);
       this.logger.error(
         {
@@ -132,6 +154,7 @@ export class OutboxDispatcherService {
           eventId: event.id,
           aggregateId: event.aggregateId,
           eventType: event.eventType,
+          attempts: attemptsAfterPublish,
           err: error,
         },
         'outbox.dispatch.failed',

@@ -47,4 +47,31 @@ describe('OutboxDispatcherService', () => {
     expect(outboxRepository.markPublished).toHaveBeenCalledWith(event.id);
     expect(outboxRepository.markFailed).not.toHaveBeenCalled();
   });
+
+  it('dead-letters an event when the retry limit is exceeded', async () => {
+    const outboxRepository: any = {
+      findPending: jest.fn(),
+      markPublishing: jest.fn(async () => ({ ...buildEvent(), attempts: 3 })),
+      markPublished: jest.fn(async () => ({})),
+      markFailed: jest.fn(async () => ({})),
+      markDeadLettered: jest.fn(async () => ({})),
+    };
+
+    const exportQueue: any = {
+      getJob: jest.fn(async () => null),
+      add: jest.fn(async () => {
+        throw new Error('Redis unavailable');
+      }),
+    };
+
+    const logger: any = { log: jest.fn(), error: jest.fn() };
+    const service = new OutboxDispatcherService(outboxRepository, exportQueue, logger);
+
+    const event = { ...buildEvent(), attempts: 3 };
+    const result = await (service as any).dispatchEvent(event);
+
+    expect(result).toBe(false);
+    expect(outboxRepository.markDeadLettered).toHaveBeenCalledWith(event.id, expect.stringContaining('Redis unavailable'));
+    expect(outboxRepository.markFailed).not.toHaveBeenCalled();
+  });
 });
