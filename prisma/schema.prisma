@@ -29,3 +29,21 @@ model Export {
   @@index([status])
   @@index([createdAt])
 }
+
+model OutboxEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  aggregateType String    @default("export") @db.VarChar(64)
+  aggregateId   String    @db.Uuid
+  eventType     String    @db.VarChar(120)
+  status        String    @default("pending") @db.VarChar(30)
+  attempts      Int       @default(0)
+  payload       Json
+  errorMessage  String?   @db.VarChar(1000)
+  createdAt     DateTime  @default(now())
+  publishedAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([aggregateType, aggregateId])
+  @@index([eventType])
+}
