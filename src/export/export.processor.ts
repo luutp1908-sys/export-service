@@ -385,5 +385,6 @@ export class ExportProcessor extends WorkerHost implements OnModuleInit, OnModul
       return attempts;
     }
 
-    return fallback;  }
+    return fallback;
+  }
 }
