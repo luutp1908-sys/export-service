@@ -33,6 +33,19 @@ export class OutboxDispatcherService {
     return dispatched;
   }
 
+  private isDuplicateJobError(error: unknown, exportId: string): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('already exists') ||
+      message.includes(`job with id \"${exportId}\" already exists`) ||
+      message.includes(`job with id '${exportId}' already exists`)
+    );
+  }
+
   private async dispatchEvent(event: OutboxEventEntity): Promise<boolean> {
     try {
       await this.outboxRepository.markPublishing(event.id);
@@ -41,21 +54,60 @@ export class OutboxDispatcherService {
         const payload = event.payload as Record<string, unknown>;
         const exportId = event.aggregateId;
 
-        await this.exportQueue.add(
-          this.queueName,
-          {
-            exportId,
-            requestId: payload.requestId as string | undefined,
-          },
-          {
-            jobId: exportId,
-            attempts: 3,
-            backoff: {
-              type: 'exponential',
-              delay: 5000,
+        const existingJob = await this.exportQueue.getJob(exportId);
+        if (existingJob) {
+          const state = await existingJob.getState();
+          if (state === 'waiting' || state === 'active' || state === 'completed' || state === 'failed' || state === 'delayed') {
+            this.logger.log(
+              {
+                module: 'outbox',
+                operation: 'dispatch.skip_duplicate',
+                eventId: event.id,
+                aggregateId: exportId,
+                eventType: event.eventType,
+                jobState: state,
+              },
+              'outbox.dispatch.skip_duplicate',
+            );
+            await this.outboxRepository.markPublished(event.id);
+            return true;
+          }
+        }
+
+        try {
+          await this.exportQueue.add(
+            this.queueName,
+            {
+              exportId,
+              requestId: payload.requestId as string | undefined,
             },
-          },
-        );
+            {
+              jobId: exportId,
+              attempts: 3,
+              backoff: {
+                type: 'exponential',
+                delay: 5000,
+              },
+            },
+          );
+        } catch (error) {
+          if (this.isDuplicateJobError(error, exportId)) {
+            this.logger.log(
+              {
+                module: 'outbox',
+                operation: 'dispatch.skip_duplicate_add',
+                eventId: event.id,
+                aggregateId: exportId,
+                eventType: event.eventType,
+              },
+              'outbox.dispatch.skip_duplicate_add',
+            );
+            await this.outboxRepository.markPublished(event.id);
+            return true;
+          }
+
+          throw error;
+        }
       }
 
       await this.outboxRepository.markPublished(event.id);
