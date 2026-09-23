@@ -23,7 +23,7 @@ This ensures the queue action is recoverable even when the app crashes between t
 ## Progress tracker
 - [x] Task 1: Define the outbox contract and status model
 - [x] Task 2: Add Prisma schema for outbox table and indexes
-- [ ] Task 3: Add repository support for outbox write and polling
+- [x] Task 3: Add repository support for outbox write and polling
 - [ ] Task 4: Add a dispatcher service to publish pending events
 - [ ] Task 5: Update export job creation flow to create job + outbox in one transaction
 - [ ] Task 6: Add idempotent queue publish logic with jobId correlation
