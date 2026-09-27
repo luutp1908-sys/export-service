@@ -23,10 +23,10 @@ This plan closes those gaps without changing the fundamental outbox design.
 - [x] Add metrics for stale recovery counts
 
 ### Phase 2: Prevent concurrent dispatcher races
-- [ ] Replace single-dispatcher assumptions with PostgreSQL work claiming using `FOR UPDATE SKIP LOCKED`
-- [ ] Claim a batch of unprocessed outbox rows per dispatcher instance without overlapping on the same row
-- [ ] Make duplicate-dispatch protection explicit under multi-instance concurrency
-- [ ] Add logs for claiming decisions and skipped claims
+- [x] Replace single-dispatcher assumptions with PostgreSQL work claiming using `FOR UPDATE SKIP LOCKED`
+- [x] Claim a batch of unprocessed outbox rows per dispatcher instance without overlapping on the same row
+- [x] Make duplicate-dispatch protection explicit under multi-instance concurrency
+- [x] Add logs for claiming decisions and skipped claims
 
 ### Phase 3: Observability and operational safety
 - [ ] Add explicit metrics: `stale_recovered`, `claim_skipped`, `claim_count`, `claim_conflict_count`
