@@ -16,6 +16,10 @@ export class OutboxDispatcherService {
     duplicate: 0,
     failed: 0,
     deadLettered: 0,
+    stale_recovered: 0,
+    claim_skipped: 0,
+    claim_count: 0,
+    claim_conflict_count: 0,
   };
 
   constructor(
@@ -26,6 +30,7 @@ export class OutboxDispatcherService {
 
   async dispatchPending(limit = 50): Promise<number> {
     const recovered = await this.outboxRepository.recoverStalePublishing(30_000);
+    this.metrics.stale_recovered += recovered;
     if (recovered > 0) {
       this.logger.warn(
         {
@@ -38,12 +43,36 @@ export class OutboxDispatcherService {
     }
 
     const pending = await this.outboxRepository.claimPendingBatch(limit, this.maxDispatchAttempts, 30_000);
+    this.metrics.claim_count += pending.length;
     this.metrics.scanned += pending.length;
 
     if (pending.length === 0) {
-      this.logger.log({ module: 'outbox', operation: 'dispatch.scan', scanned: this.metrics.scanned }, 'outbox.dispatch.scan');
+      this.metrics.claim_skipped += 1;
+      this.metrics.claim_conflict_count += 1;
+      this.logger.log(
+        {
+          module: 'outbox',
+          operation: 'dispatch.scan',
+          scanned: this.metrics.scanned,
+          claimed: 0,
+          claimSkipped: this.metrics.claim_skipped,
+          claimConflictCount: this.metrics.claim_conflict_count,
+        },
+        'outbox.dispatch.scan',
+      );
       return 0;
     }
+
+    this.logger.log(
+      {
+        module: 'outbox',
+        operation: 'dispatch.claim_batch',
+        claimed: pending.length,
+        claimCount: this.metrics.claim_count,
+        staleRecovered: this.metrics.stale_recovered,
+      },
+      'outbox.dispatch.claim_batch',
+    );
 
     let dispatched = 0;
 

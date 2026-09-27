@@ -29,9 +29,15 @@ This plan closes those gaps without changing the fundamental outbox design.
 - [x] Add logs for claiming decisions and skipped claims
 
 ### Phase 3: Observability and operational safety
-- [ ] Add explicit metrics: `stale_recovered`, `claim_skipped`, `claim_count`, `claim_conflict_count`
-- [ ] Record claiming and retry decisions in dispatcher logs
-- [ ] Add alerting guidance for dead-letter and stale-row thresholds
+- [x] Add explicit metrics: `stale_recovered`, `claim_skipped`, `claim_count`, `claim_conflict_count`
+- [x] Record claiming and retry decisions in dispatcher logs
+- [x] Add alerting guidance for dead-letter and stale-row thresholds
+
+Operational guidance:
+- alert when `stale_recovered` rises above the normal baseline for a sustained interval
+- alert when `claim_conflict_count` spikes, which indicates lock contention or a burst of concurrent dispatchers
+- alert on `deadLettered` counts and on sustained `failed` retries beyond the configured threshold
+- use the dispatcher logs to correlate claim decisions, duplicate skips, and recovery actions during restarts
 
 ### Phase 4: Test coverage and validation
 - [ ] Add a failing test for stale `publishing` recovery
