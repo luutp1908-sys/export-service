@@ -70,6 +70,41 @@ export class OutboxRepository {
     return rows as OutboxEventEntity[];
   }
 
+  async claimPendingBatch(limit = 50, maxAttempts = 5, stalePublishingMaxAgeMs = 30_000): Promise<OutboxEventEntity[]> {
+    const staleBefore = new Date(Date.now() - stalePublishingMaxAgeMs);
+    const rows = await (this.prisma as any).$queryRawUnsafe(
+      `
+        WITH claimed AS (
+          SELECT id
+          FROM "OutboxEvent"
+          WHERE status = $1
+             OR (status = $2 AND attempts < $3)
+             OR (status = $4 AND "updatedAt" < $5)
+          ORDER BY "createdAt" ASC
+          LIMIT $6
+          FOR UPDATE SKIP LOCKED
+        )
+        UPDATE "OutboxEvent" AS e
+        SET status = $7,
+            attempts = e.attempts + 1,
+            "errorMessage" = NULL,
+            "updatedAt" = NOW()
+        FROM claimed
+        WHERE e.id = claimed.id
+        RETURNING e.*;
+      `,
+      OutboxStatus.PENDING,
+      OutboxStatus.FAILED,
+      maxAttempts,
+      OutboxStatus.PUBLISHING,
+      staleBefore,
+      limit,
+      OutboxStatus.PUBLISHING,
+    );
+
+    return (rows ?? []) as OutboxEventEntity[];
+  }
+
   async markPublishing(id: string): Promise<OutboxEventEntity | null> {
     const row = await (this.prisma as any).outboxEvent.update({
       where: { id },

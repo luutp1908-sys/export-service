@@ -23,14 +23,14 @@ This plan closes those gaps without changing the fundamental outbox design.
 - [x] Add metrics for stale recovery counts
 
 ### Phase 2: Prevent concurrent dispatcher races
-- [ ] Add a leader/lock check before dispatching batches
-- [ ] Use a Redis lock or DB advisory lock to ensure a single dispatcher is active
+- [ ] Replace single-dispatcher assumptions with PostgreSQL work claiming using `FOR UPDATE SKIP LOCKED`
+- [ ] Claim a batch of unprocessed outbox rows per dispatcher instance without overlapping on the same row
 - [ ] Make duplicate-dispatch protection explicit under multi-instance concurrency
-- [ ] Add logs for lock acquisition and lock contention
+- [ ] Add logs for claiming decisions and skipped claims
 
 ### Phase 3: Observability and operational safety
-- [ ] Add explicit metrics: `stale_recovered`, `dispatch_lock_skipped`, `dispatch_lock_acquired`
-- [ ] Record lock and retry decision in dispatcher logs
+- [ ] Add explicit metrics: `stale_recovered`, `claim_skipped`, `claim_count`, `claim_conflict_count`
+- [ ] Record claiming and retry decisions in dispatcher logs
 - [ ] Add alerting guidance for dead-letter and stale-row thresholds
 
 ### Phase 4: Test coverage and validation
@@ -73,15 +73,16 @@ Extend `findPending()` to query for:
 
 This ensures a process restart can safely drain orphaned dispatch attempts.
 
-### 3) Add a single-dispatcher lock
-Use a Redis lock (preferred) or a database lock to ensure only one runtime instance processes the outbox at a time.
+### 3) Use PostgreSQL work claiming via `FOR UPDATE SKIP LOCKED`
+Use row-level locking in PostgreSQL so multiple dispatcher instances can safely claim different outbox events without colliding on the same row.
 
 Recommended operation:
-- acquire lock key `outbox:dispatcher:leader`
-- set TTL to cover the dispatch batch window
-- if lock is not acquired, skip the tick and log a debug/warn message
+- select candidate outbox rows, ordered by creation time
+- lock rows with `FOR UPDATE SKIP LOCKED`
+- only the claiming instance can update the row to `publishing`
+- other instances skip rows already claimed by another worker
 
-This prevents harmless duplicate polling from multiple service replicas.
+This allows multiple replicas to process different work items in parallel while preventing the same row from being claimed twice.
 
 ### 4) Strengthen duplicate safety under concurrency
 Keep the existing dedupe logic, but also treat the dispatcher as race-aware:
@@ -106,8 +107,8 @@ This makes the recovery path observable and easier to debug in production.
 1. Add stale `publishing` recovery repository method
 2. Extend pending fetch logic to include stale `publishing` rows
 3. Call recovery during startup and before each dispatch batch
-4. Add a distributed leader lock to avoid multi-instance races
-5. Add test coverage for stale recovery and lock behavior
+4. Replace single-dispatcher assumptions with PostgreSQL `FOR UPDATE SKIP LOCKED` claiming
+5. Add test coverage for stale recovery and claiming behavior
 6. Add metrics and operation logs
 
 ---
@@ -117,7 +118,7 @@ The outbox pattern is considered hardened when all of the following are true:
 
 - a process crash does not leave a row permanently stuck in `publishing`
 - a restarted service can replay its pending and stale-publishing rows
-- only one dispatcher instance processes the outbox at a time
+- multiple dispatcher instances can claim different rows without overlapping on the same event
 - duplicate queue jobs are rejected or treated as idempotent
 - recovery behavior is observable through logs and metrics
 - the dispatcher remains safe under transient Redis or DB failures

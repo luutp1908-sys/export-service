@@ -37,7 +37,7 @@ export class OutboxDispatcherService {
       );
     }
 
-    const pending = await this.outboxRepository.findPending(limit, 5, 30_000);
+    const pending = await this.outboxRepository.claimPendingBatch(limit, this.maxDispatchAttempts, 30_000);
     this.metrics.scanned += pending.length;
 
     if (pending.length === 0) {
@@ -121,8 +121,13 @@ export class OutboxDispatcherService {
     let attemptsAfterPublish = event.attempts + 1;
 
     try {
-      const publishingState = await this.outboxRepository.markPublishing(event.id);
-      attemptsAfterPublish = Number(publishingState?.attempts ?? attemptsAfterPublish);
+      let publishingState: OutboxEventEntity | null = null;
+      if (event.status !== OutboxStatus.PUBLISHING) {
+        publishingState = await this.outboxRepository.markPublishing(event.id);
+        attemptsAfterPublish = Number(publishingState?.attempts ?? attemptsAfterPublish);
+      } else {
+        attemptsAfterPublish = Number(event.attempts ?? attemptsAfterPublish);
+      }
 
       if (event.eventType === OUTBOX_EVENT_TYPES.EXPORT_JOB_CREATED) {
         const payload = event.payload as Record<string, unknown>;

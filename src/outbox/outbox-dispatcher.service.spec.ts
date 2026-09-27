@@ -80,6 +80,7 @@ describe('OutboxDispatcherService', () => {
     const outboxRepository: any = {
       recoverStalePublishing: jest.fn(async () => 0),
       findPending: jest.fn(async () => []),
+      claimPendingBatch: jest.fn(async () => []),
       markPublishing: jest.fn(async () => ({})),
       markPublished: jest.fn(async () => ({})),
       markFailed: jest.fn(async () => ({})),
@@ -150,5 +151,42 @@ describe('OutboxDispatcherService', () => {
       }),
       take: 10,
     }));
+  });
+
+  it('claims a batch of rows using PostgreSQL FOR UPDATE SKIP LOCKED', async () => {
+    const queryRawUnsafe = jest.fn(async () => [
+      {
+        id: 'event-1',
+        aggregateType: 'export',
+        aggregateId: 'export-123',
+        eventType: OUTBOX_EVENT_TYPES.EXPORT_JOB_CREATED,
+        status: OutboxStatus.PUBLISHING,
+        attempts: 1,
+        payload: { requestId: 'req-123' },
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+
+    const prisma: any = {
+      $queryRawUnsafe: queryRawUnsafe,
+    };
+
+    const repo = new OutboxRepository(prisma);
+    const rows = await repo.claimPendingBatch(10, 5, 30_000);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].status).toBe(OutboxStatus.PUBLISHING);
+    expect(rows[0].attempts).toBe(1);
+    expect(queryRawUnsafe).toHaveBeenCalledWith(
+      expect.stringContaining('FOR UPDATE SKIP LOCKED'),
+      OutboxStatus.PENDING,
+      OutboxStatus.FAILED,
+      5,
+      OutboxStatus.PUBLISHING,
+      expect.any(Date),
+      10,
+      OutboxStatus.PUBLISHING,
+    );
   });
 });
