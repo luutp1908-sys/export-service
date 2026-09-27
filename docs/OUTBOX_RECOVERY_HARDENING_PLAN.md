@@ -17,10 +17,10 @@ This plan closes those gaps without changing the fundamental outbox design.
 ## Progress tracker
 
 ### Phase 1: Recovery from stale in-flight dispatches
-- [ ] Add a repository method to recover stale `publishing` rows back to `pending`
-- [ ] Include stale `publishing` rows in the dispatcher polling query
-- [ ] Invoke stale recovery on startup and before each dispatch cycle
-- [ ] Add metrics for stale recovery counts
+- [x] Add a repository method to recover stale `publishing` rows back to `pending`
+- [x] Include stale `publishing` rows in the dispatcher polling query
+- [x] Invoke stale recovery on startup and before each dispatch cycle
+- [x] Add metrics for stale recovery counts
 
 ### Phase 2: Prevent concurrent dispatcher races
 - [ ] Add a leader/lock check before dispatching batches
