@@ -7,6 +7,9 @@ import { ExportService } from './export.service';
 import { EXPORT_REPOSITORY } from './export.tokens';
 import { QueueHealthService } from '../queue/queue-health.service';
 import { WorkerHealthRegistry } from '../queue/worker-health.registry';
+import { OutboxDispatcherService } from '../outbox/outbox-dispatcher.service';
+import { OutboxDispatcherTriggerService } from '../outbox/outbox-dispatcher-trigger.service';
+import { OutboxRepository } from '../outbox/outbox.repository.prisma';
 const impl = process.env.MOCK_MODE === 'true' || process.env.MOCK_MODE === '1'
   ? require('./export.repository.mock')
   : require('./export.repository.prisma');
@@ -24,9 +27,12 @@ const queueProviders = isMock
   controllers: [ExportController],
   providers: [
     ExportService,
+    OutboxRepository,
+    OutboxDispatcherService,
+    OutboxDispatcherTriggerService,
     ...queueProviders,
     { provide: EXPORT_REPOSITORY, useClass: impl.ExportRepository },
   ],
-  exports: [ExportService],
+  exports: [ExportService, OutboxDispatcherService, OutboxDispatcherTriggerService],
 })
 export class ExportModule {}
