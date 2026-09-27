@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { OutboxDispatcherService } from './outbox-dispatcher.service';
 import { OutboxEventEntity, OutboxStatus, OUTBOX_EVENT_TYPES } from './outbox-event.entity';
+import { OutboxRepository } from './outbox.repository.prisma';
 
 describe('OutboxDispatcherService', () => {
   const buildEvent = (): OutboxEventEntity => ({
@@ -77,6 +78,7 @@ describe('OutboxDispatcherService', () => {
 
   it('tracks a metrics snapshot for the dispatch lifecycle', async () => {
     const outboxRepository: any = {
+      recoverStalePublishing: jest.fn(async () => 0),
       findPending: jest.fn(async () => []),
       markPublishing: jest.fn(async () => ({})),
       markPublished: jest.fn(async () => ({})),
@@ -100,5 +102,53 @@ describe('OutboxDispatcherService', () => {
     expect(metrics.published).toBe(0);
     expect(metrics.failed).toBe(0);
     expect(metrics.deadLettered).toBe(0);
+  });
+
+  it('recovers stale publishing rows so they can be retried', async () => {
+    const updateMany = jest.fn(async () => ({ count: 2 }));
+    const prisma: any = {
+      outboxEvent: {
+        updateMany,
+      },
+    };
+
+    const repo = new OutboxRepository(prisma);
+    const count = await repo.recoverStalePublishing(30_000);
+
+    expect(count).toBe(2);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {
+        status: OutboxStatus.PUBLISHING,
+        updatedAt: { lt: expect.any(Date) },
+      },
+      data: {
+        status: OutboxStatus.PENDING,
+        errorMessage: null,
+      },
+    });
+  });
+
+  it('includes stale publishing rows in pending dispatch queries', async () => {
+    const findMany = jest.fn(async () => []);
+    const prisma: any = {
+      outboxEvent: {
+        findMany,
+      },
+    };
+
+    const repo = new OutboxRepository(prisma);
+    await repo.findPending(10, 5, 30_000);
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        OR: expect.arrayContaining([
+          expect.objectContaining({
+            status: OutboxStatus.PUBLISHING,
+            updatedAt: { lt: expect.any(Date) },
+          }),
+        ]),
+      }),
+      take: 10,
+    }));
   });
 });

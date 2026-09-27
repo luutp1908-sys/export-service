@@ -25,7 +25,19 @@ export class OutboxDispatcherService {
   ) {}
 
   async dispatchPending(limit = 50): Promise<number> {
-    const pending = await this.outboxRepository.findPending(limit);
+    const recovered = await this.outboxRepository.recoverStalePublishing(30_000);
+    if (recovered > 0) {
+      this.logger.warn(
+        {
+          module: 'outbox',
+          operation: 'dispatch.recover_stale_publishing',
+          recovered,
+        },
+        'outbox.dispatch.recover_stale_publishing',
+      );
+    }
+
+    const pending = await this.outboxRepository.findPending(limit, 5, 30_000);
     this.metrics.scanned += pending.length;
 
     if (pending.length === 0) {

@@ -29,7 +29,24 @@ export class OutboxRepository {
     return record as OutboxEventEntity;
   }
 
-  async findPending(limit = 50, maxAttempts = 5): Promise<OutboxEventEntity[]> {
+  async recoverStalePublishing(maxAgeMs = 30_000): Promise<number> {
+    const staleBefore = new Date(Date.now() - maxAgeMs);
+    const result = await (this.prisma as any).outboxEvent.updateMany({
+      where: {
+        status: OutboxStatus.PUBLISHING,
+        updatedAt: { lt: staleBefore },
+      },
+      data: {
+        status: OutboxStatus.PENDING,
+        errorMessage: null,
+      },
+    });
+
+    return Number(result?.count ?? 0);
+  }
+
+  async findPending(limit = 50, maxAttempts = 5, stalePublishingMaxAgeMs = 30_000): Promise<OutboxEventEntity[]> {
+    const staleBefore = new Date(Date.now() - stalePublishingMaxAgeMs);
     const rows = await (this.prisma as any).outboxEvent.findMany({
       where: {
         OR: [
@@ -37,6 +54,10 @@ export class OutboxRepository {
           {
             status: OutboxStatus.FAILED,
             attempts: { lt: maxAttempts },
+          },
+          {
+            status: OutboxStatus.PUBLISHING,
+            updatedAt: { lt: staleBefore },
           },
         ],
       },
