@@ -70,8 +70,7 @@ export class OutboxRepository {
     return rows as OutboxEventEntity[];
   }
 
-  async claimPendingBatch(limit = 50, maxAttempts = 5, stalePublishingMaxAgeMs = 30_000): Promise<OutboxEventEntity[]> {
-    const staleBefore = new Date(Date.now() - stalePublishingMaxAgeMs);
+  async claimPendingBatch(limit = 50, maxAttempts = 5): Promise<OutboxEventEntity[]> {
     const rows = await (this.prisma as any).$queryRawUnsafe(
       `
         WITH claimed AS (
@@ -79,13 +78,12 @@ export class OutboxRepository {
           FROM "OutboxEvent"
           WHERE status = $1
              OR (status = $2 AND attempts < $3)
-             OR (status = $4 AND "updatedAt" < $5)
           ORDER BY "createdAt" ASC
-          LIMIT $6
+          LIMIT $4
           FOR UPDATE SKIP LOCKED
         )
         UPDATE "OutboxEvent" AS e
-        SET status = $7,
+        SET status = $5,
             attempts = e.attempts + 1,
             "errorMessage" = NULL,
             "updatedAt" = NOW()
@@ -96,8 +94,6 @@ export class OutboxRepository {
       OutboxStatus.PENDING,
       OutboxStatus.FAILED,
       maxAttempts,
-      OutboxStatus.PUBLISHING,
-      staleBefore,
       limit,
       OutboxStatus.PUBLISHING,
     );

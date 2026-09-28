@@ -129,28 +129,24 @@ describe('OutboxDispatcherService', () => {
     });
   });
 
-  it('includes stale publishing rows in pending dispatch queries', async () => {
-    const findMany = jest.fn(async () => []);
+  it('does not include stale publishing rows in the claim query because recovery handles them separately', async () => {
+    const queryRawUnsafe = jest.fn(async () => []);
     const prisma: any = {
-      outboxEvent: {
-        findMany,
-      },
+      $queryRawUnsafe: queryRawUnsafe,
     };
 
     const repo = new OutboxRepository(prisma);
-    await repo.findPending(10, 5, 30_000);
+    await repo.claimPendingBatch(10, 5);
 
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        OR: expect.arrayContaining([
-          expect.objectContaining({
-            status: OutboxStatus.PUBLISHING,
-            updatedAt: { lt: expect.any(Date) },
-          }),
-        ]),
-      }),
-      take: 10,
-    }));
+    expect(queryRawUnsafe).toHaveBeenCalledTimes(1);
+    expect(queryRawUnsafe).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE status = $1'),
+      OutboxStatus.PENDING,
+      OutboxStatus.FAILED,
+      5,
+      10,
+      OutboxStatus.PUBLISHING,
+    );
   });
 
   it('claims a batch of rows using PostgreSQL FOR UPDATE SKIP LOCKED', async () => {
@@ -173,7 +169,7 @@ describe('OutboxDispatcherService', () => {
     };
 
     const repo = new OutboxRepository(prisma);
-    const rows = await repo.claimPendingBatch(10, 5, 30_000);
+    const rows = await repo.claimPendingBatch(10, 5);
 
     expect(rows).toHaveLength(1);
     expect(rows[0].status).toBe(OutboxStatus.PUBLISHING);
@@ -183,8 +179,6 @@ describe('OutboxDispatcherService', () => {
       OutboxStatus.PENDING,
       OutboxStatus.FAILED,
       5,
-      OutboxStatus.PUBLISHING,
-      expect.any(Date),
       10,
       OutboxStatus.PUBLISHING,
     );
