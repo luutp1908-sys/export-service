@@ -1,0 +1,133 @@
+#set page(
+  paper: "a4",
+  margin: (x: 1.5cm, y: 1.6cm),
+)
+
+#set text(
+  font: "Libertinus Sans",
+  size: 10pt,
+)
+
+#set par(
+  leading: 0.7em,
+)
+
+#let section(title) = [
+  #v(0.8em)
+  #text(weight: "bold", size: 13pt)[#title]
+  #line(length: 100%)
+  #v(0.3em)
+]
+
+#align(center)[
+  #text(size: 24pt, weight: "bold")[Tran Phuoc Luu] \
+  Front-End Engineer \
+  Email: luutp1908\@gmail.com
+  • Phone: 0373 269 784
+  • DOB: 09/07/1999
+  • Address: Tan Binh, Ho Chi Minh
+]
+
+#section[Professional Summary]
+
+*Frontend Engineer* with *6 years of experience* building scalable, high-performance web applications using *React*, *Next.js*, and *TypeScript*. Strong background in *frontend architecture*, *performance optimization*, and *micro-frontend development*. Specialized in developing *browser-based graphic editors* with advanced canvas interactions, *real-time collaboration*, and *AI-assisted design experiences*.
+
+#section[Technical Skills]
+
+#table(
+  columns: (3.5cm, 1fr),
+  stroke: none,
+  inset: (x: 0pt, y: 3pt),
+
+  [*Languages*], [
+    TypeScript, JavaScript (ES6+), HTML5, CSS3.
+  ],
+
+  [*Frontend*], [
+    React, NextJS, React Hooks, Redux Toolkit, React Context, TanStack Query.
+  ],
+  [*Performance*], [
+    Performance Optimization, Code Splitting, Lazy Loading,
+    Memoization, Virtualization, Bundle Optimization,
+    Rendering Optimization.
+  ],
+
+  [*Web Technologies*], [
+    REST APIs, JSON, Authentication (JWT/OAuth),
+    Browser Caching, CDN, Service Workers.
+  ],
+
+  [*Styling*], [
+    Styled Components, Responsive Design,
+    Cross-Browser Compatibility, CSS Modules.
+  ],
+
+  [*Build & Tools*], [
+    Vite, ESBuild, Rollup, Webpack, Git, GitHub Actions.
+  ],
+)
+#section[Professional Experience]
+
+#table(
+  columns: (1fr, auto),
+  stroke: none,
+  inset: 0pt,
+  [
+    #text(weight: "bold")[Template.net]
+    \
+    #text(size: 9pt, fill: rgb("#666"))[Senior Front-End Engineer]
+  ],
+  [
+    #align(right)[12/2020 – Present]
+  ],
+)
+
+*Template.net* is an *AI-powered browser-based content creation platform* serving *10M+ users*, offering collaborative editors for graphics, documents, and whiteboards with multi-format export to *PDF*, *PNG*, and *JPEG*.
+
+- Engineered core features for a high-performance *React*-based graphic editor, implementing drag-and-drop interactions, element transformations, and responsive visual rendering.
+
+- Developed an AI-powered *Text-to-Design* feature that converts natural language prompts into fully editable designs.
+
+- Implemented real-time collaborative editing with *WebSockets*, supporting concurrent users with role-based permissions for viewing, commenting, editing, and ownership.
+
+- Architected and developed the platform homepage with *Next.js App Router*, building reusable components, shared layouts, responsive UI, and optimized rendering/data-fetching strategies.
+
+- Built a shared *React component library* used across multiple *Micro-Frontends*, reducing duplicated code and maintaining consistent UI patterns.
+
+- Optimized application performance using *memoization*, *virtualization*, efficient state management, and rendering optimizations for complex designs.
+
+- Migrated the frontend from *Webpack* to *Vite* with *Module Federation*, reducing startup time by *80%* and build time by *65%*.
+
+- Developed an internal content management platform for publishers to manage templates, categories, and digital assets, streamlining publishing workflows.
+
+- Implemented *GitHub Actions* CI/CD pipelines to automate linting, builds, and deployments.
+
+- Collaborated with *Product*, *Design*, and *Backend* teams on technical solutions, while mentoring junior engineers through code reviews and technical guidance.
+
+#v(0.9em)
+
+#table(
+  columns: (1fr, auto),
+  stroke: none,
+  inset: 0pt,
+  [
+    #text(weight: "bold")[OmiCall]
+    \
+    #text(size: 9pt, fill: rgb("#666"))[Frontend Developer]
+  ],
+  [
+    #align(right)[06/2020 – 10/2020]
+  ],
+)
+
+OmiCall is a cloud-based VoIP communication platform that helps businesses manage customer interactions through call center operations, agent management tools, real-time dashboards, and CRM-integrated workflows.
+
+- Developed *responsive web interfaces* using *React* and *Redux* for customer communication and call center management features.
+- Built *reusable UI components* and integrated *REST APIs* to implement new product features.
+- Fixed application issues, enhanced existing features, and improved the overall user experience.
+
+#v(0.6em)
+#section[Languages]
+
+- *English* — *Full Professional Proficiency*
+- *Vietnamese* — *Native*
