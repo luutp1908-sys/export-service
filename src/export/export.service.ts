@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { JobsOptions, Queue } from 'bullmq';
 import { existsSync } from 'fs';
 import { Logger } from 'nestjs-pino';
@@ -69,34 +70,79 @@ export class ExportService {
   }
 
   async createJob(payload: CreateExportDto, userId: string, requestId?: string): Promise<ExportEntity> {
-    this.logger.warn({ payload, userId, requestId }, 'export.createJob.start');
+    const tracer = trace.getTracer('template-saas-export-service.export.service');
 
-    let created: ExportEntity;
-    try {
-      created = await this.repository.createWithOutbox(payload, userId, requestId);
-      this.logger.warn({ exportId: created.id, userId, requestId }, 'export.createJob.repository.success');
-    } catch (error) {
-      this.logger.error({ err: error, payload, userId, requestId }, 'export.createJob.repository.failed');
-      throw error;
-    }
+    return tracer.startActiveSpan('service.export.createJob', { kind: SpanKind.INTERNAL }, async (span) => {
+      span.setAttributes({
+        'app.operation': 'export.createJob',
+        'user.id': userId,
+        'request.id': requestId ?? '',
+      });
 
-    this.logger.log(
-      enrichWithTraceContext({
-        module: 'outbox',
-        operation: 'export.created',
-        queue: this.queueName,
-        exportId: created.id,
-        userId,
-        requestId,
-      }),
-      'outbox.event.recorded',
-    );
+      try {
+        this.logger.warn({ payload, userId, requestId }, 'export.createJob.start');
 
-    return created;
+        let created: ExportEntity;
+        try {
+          created = await this.repository.createWithOutbox(payload, userId, requestId);
+          this.logger.warn({ exportId: created.id, userId, requestId }, 'export.createJob.repository.success');
+        } catch (error) {
+          this.logger.error({ err: error, payload, userId, requestId }, 'export.createJob.repository.failed');
+          throw error;
+        }
+
+        this.logger.log(
+          enrichWithTraceContext({
+            module: 'outbox',
+            operation: 'export.created',
+            queue: this.queueName,
+            exportId: created.id,
+            userId,
+            requestId,
+          }),
+          'outbox.event.recorded',
+        );
+
+        span.setStatus({ code: SpanStatusCode.OK });
+        return created;
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : 'Create export job failed',
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   async findJobStatus(id: string, userId: string): Promise<ExportEntity | null> {
-    return this.repository.findById(id, userId);
+    const tracer = trace.getTracer('template-saas-export-service.export.service');
+
+    return tracer.startActiveSpan('service.export.findJobStatus', { kind: SpanKind.INTERNAL }, async (span) => {
+      span.setAttributes({
+        'app.operation': 'export.findJobStatus',
+        'export.job.id': id,
+        'user.id': userId,
+      });
+
+      try {
+        const result = await this.repository.findById(id, userId);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : 'Find export job status failed',
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   async findJobStatusOrThrow(id: string, userId: string): Promise<ExportEntity> {
@@ -109,16 +155,47 @@ export class ExportService {
   }
 
   async resolveDownloadableJobOrThrow(id: string, userId: string): Promise<ExportEntity> {
-    const exportJob = await this.findJobStatusOrThrow(id, userId);
+    const tracer = trace.getTracer('template-saas-export-service.export.service');
 
-    if (exportJob.status !== 'completed' || !exportJob.downloadPath) {
-      throw new ConflictException('Export job is not completed yet');
-    }
+    return tracer.startActiveSpan('service.export.resolveDownloadableJobOrThrow', { kind: SpanKind.INTERNAL }, async (span) => {
+      span.setAttributes({
+        'app.operation': 'export.resolveDownloadableJobOrThrow',
+        'export.job.id': id,
+        'user.id': userId,
+      });
 
-    if (!existsSync(exportJob.downloadPath)) {
-      throw new ConflictException('Export file has not been generated yet');
-    }
+      try {
+        const exportJob = await this.findJobStatusOrThrow(id, userId);
 
-    return exportJob;
+        const validationSpan = tracer.startSpan('service.export.download.validation', { kind: SpanKind.INTERNAL });
+        if (exportJob.status !== 'completed' || !exportJob.downloadPath) {
+          validationSpan.recordException(new ConflictException('Export job is not completed yet'));
+          validationSpan.setStatus({ code: SpanStatusCode.ERROR, message: 'Export job not completed' });
+          validationSpan.end();
+          throw new ConflictException('Export job is not completed yet');
+        }
+
+        if (!existsSync(exportJob.downloadPath)) {
+          validationSpan.recordException(new ConflictException('Export file has not been generated yet'));
+          validationSpan.setStatus({ code: SpanStatusCode.ERROR, message: 'Export file missing' });
+          validationSpan.end();
+          throw new ConflictException('Export file has not been generated yet');
+        }
+        validationSpan.setStatus({ code: SpanStatusCode.OK });
+        validationSpan.end();
+
+        span.setStatus({ code: SpanStatusCode.OK });
+        return exportJob;
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : 'Resolve downloadable job failed',
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 }

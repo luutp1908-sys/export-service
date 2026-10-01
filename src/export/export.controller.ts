@@ -18,6 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -43,7 +44,30 @@ export class ExportController {
     @Req() req: Request,
   ): Promise<ExportEntity> {
     const requestId = (req.headers['x-request-id'] as string | undefined) ?? undefined;
-    return this.service.createJob(payload, user.id, requestId);
+    const tracer = trace.getTracer('template-saas-export-service.export.controller');
+
+    return tracer.startActiveSpan('controller.export.createJob', { kind: SpanKind.INTERNAL }, async (span) => {
+      span.setAttributes({
+        'app.operation': 'export.createJob',
+        'user.id': user.id,
+        'request.id': requestId ?? '',
+      });
+
+      try {
+        const result = await this.service.createJob(payload, user.id, requestId);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : 'Create export job failed',
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   @Get('jobs/:id')
@@ -54,7 +78,30 @@ export class ExportController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthUser,
   ): Promise<ExportEntity> {
-    return this.service.findJobStatusOrThrow(id, user.id);
+    const tracer = trace.getTracer('template-saas-export-service.export.controller');
+
+    return tracer.startActiveSpan('controller.export.findJobStatus', { kind: SpanKind.INTERNAL }, async (span) => {
+      span.setAttributes({
+        'app.operation': 'export.findJobStatus',
+        'export.job.id': id,
+        'user.id': user.id,
+      });
+
+      try {
+        const result = await this.service.findJobStatusOrThrow(id, user.id);
+        span.setStatus({ code: SpanStatusCode.OK });
+        return result;
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : 'Find export job status failed',
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   @Get('jobs/:id/download')
@@ -68,9 +115,31 @@ export class ExportController {
     @CurrentUser() user: AuthUser,
     @Res() res: Response,
   ): Promise<void> {
-    const exportJob = await this.service.resolveDownloadableJobOrThrow(id, user.id);
+    const tracer = trace.getTracer('template-saas-export-service.export.controller');
 
-    res.setHeader('Content-Disposition', `attachment; filename="${exportJob.fileName}"`);
-    res.sendFile(exportJob.downloadPath!);
+    await tracer.startActiveSpan('controller.export.download', { kind: SpanKind.INTERNAL }, async (span) => {
+      span.setAttributes({
+        'app.operation': 'export.download',
+        'export.job.id': id,
+        'user.id': user.id,
+      });
+
+      try {
+        const exportJob = await this.service.resolveDownloadableJobOrThrow(id, user.id);
+
+        res.setHeader('Content-Disposition', `attachment; filename="${exportJob.fileName}"`);
+        res.sendFile(exportJob.downloadPath!);
+        span.setStatus({ code: SpanStatusCode.OK });
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : 'Export download failed',
+        });
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 }
