@@ -1,0 +1,118 @@
+#set page(
+  paper: "a4",
+  margin: (x: 1.5cm, y: 1.6cm),
+)
+
+#set text(
+  font: "Libertinus Sans",
+  size: 10pt,
+)
+
+#set par(
+  leading: 0.7em,
+)
+
+#let section(title) = [
+  #v(0.8em)
+  #text(weight: "bold", size: 13pt)[#title]
+  #line(length: 100%)
+  #v(0.3em)
+]
+
+#align(center)[
+  #text(size: 24pt, weight: "bold")[Tran Phuoc Luu] \
+  Back-End Engineer \
+  Email: luutp1908\@gmail.com
+  • Phone: 0373 269 784
+  • DOB: 09/07/1999
+  • Address: 19 Ngo Be, Tan Binh, Ho Chi Minh
+]
+
+#section[Professional Summary]
+
+Backend Engineer with 6 years of experience in software development, specializing in building scalable, reliable, and high-performance web applications. Experienced in NodeJS, NestJS, TypeScript, PostgreSQL, Redis, Prisma, and BullMQ, with hands-on experience designing RESTful APIs, database optimization, caching strategies, background job processing, and asynchronous workflows.
+
+
+#section[Technical Skills]
+#table(
+columns: (3.5cm, 1fr),
+stroke: none,
+inset: (x: 0pt, y: 3pt),
+
+[Languages], [
+TypeScript, JavaScript (ES6+), SQL, HTML5, CSS3.
+],
+
+[Backend], [
+Node.js, NestJS, REST APIs, WebSockets, BullMQ, Background Job Processing, Asynchronous Workflows.
+],
+
+[Databases & Caching], [
+PostgreSQL, MySQL, Redis, Prisma.
+],
+
+[Frontend], [
+React, Next.js, Styled Components, CSS Modules, Responsive Design, Code Splitting, Lazy Loading, Bundle Optimization.
+],
+
+[Build & Tools], [
+Vite, esbuild, Rollup, Webpack, Git.
+],
+)
+
+#section[Professional Experience]
+
+#table(
+  columns: (1fr, auto),
+  stroke: none,
+  inset: 0pt,
+  [
+    #text(weight: "bold")[Template.net]
+    \
+    #text(size: 9pt, fill: rgb("#666"))[Full Stack Engineer]
+  ],
+  [
+    #align(right)[12/2020 – Present]
+  ],
+)
+
+*Template.net* is an AI-powered browser-based content creation platform serving 10M+ users, offering collaborative editors for graphics, documents, and whiteboards.
+
+- Developed and maintained a web-based graphic editor using React, TypeScript.
+- Built scalable frontend architectures using micro-frontends and Module Federation.
+- Developed the homepage using NextJSs, implementing rendering strategies and caching for performance and SEO.
+- Developed REST APIs and backend services using NodeJS, NestJS, and MySQL.
+- Implemented real-time collaboration using WebSockets for multi-user editing.
+- Worked on an asynchronous export pipeline for generating PNG, JPEG, PDF, and MP4 outputs.
+- Optimized frontend rendering, bundle size, and application performance.
+- Integrated Redis caching to improve backend efficiency.
+- Built CI/CD pipelines using GitHub Actions, AWS authentication through OIDC, and frontend deployment.
+- Collaborated with cross-functional teams to deliver end-to-end product features.
+- Used AI-assisted tools such as GitHub Copilot and Claude Code to improve development speed and code quality.
+
+#v(0.9em)
+
+#table(
+  columns: (1fr, auto),
+  stroke: none,
+  inset: 0pt,
+  [
+    #text(weight: "bold")[OmiCall]
+    \
+    #text(size: 9pt, fill: rgb("#666"))[Frontend Developer]
+  ],
+  [
+    #align(right)[06/2020 – 10/2020]
+  ],
+)
+
+*OmiCall* is a cloud-based VoIP communication platform that helps businesses manage customer interactions through call center operations, agent management tools, real-time dashboards, and CRM-integrated workflows.
+
+- Built responsive interfaces using React and Redux.
+- Developed reusable components and integrated REST APIs.
+- Maintained and fixed bugs.
+
+#v(0.6em)
+#section[Languages]
+
+- *English* — *Fluent (B2)*
