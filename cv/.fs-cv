@@ -30,7 +30,7 @@
 
 #section[Professional Summary]
 
-Backend Engineer with 6 years of experience in software development, specializing in building scalable, reliable, and high-performance web applications. Experienced in NodeJS, NestJS, TypeScript, PostgreSQL, Redis, Prisma, and BullMQ, with hands-on experience designing RESTful APIs, database optimization, caching strategies, background job processing, and asynchronous workflows.
+*Full Stack Engineer* with *6 years of experience* building scalable, high-performance web applications. Strong expertise in *React*, *Next.js*, and *frontend architecture*, complemented by hands-on experience with *NestJS*, *microservices*, *PostgreSQL*, *MongoDB*, and *Redis*. Experienced in *application performance optimization*, *secure application development*, and delivering *end-to-end features* across frontend and backend systems.
 
 
 #section[Technical Skills]
@@ -43,20 +43,20 @@ inset: (x: 0pt, y: 3pt),
 TypeScript, JavaScript (ES6+), SQL, HTML5, CSS3.
 ],
 
+[Frontend], [
+React, Next.js, Styled Components, CSS Modules, Tailwind CSS, Responsive Design, Code Splitting, Lazy Loading, Bundle Optimization.
+],
+
 [Backend], [
 Node.js, NestJS, REST APIs, WebSockets, BullMQ, Background Job Processing, Asynchronous Workflows.
 ],
 
 [Databases & Caching], [
-PostgreSQL, MySQL, Redis, Prisma.
-],
-
-[Frontend], [
-React, Next.js, Styled Components, CSS Modules, Responsive Design, Code Splitting, Lazy Loading, Bundle Optimization.
+PostgreSQL, MongoDB, Redis, Prisma.
 ],
 
 [Build & Tools], [
-Vite, esbuild, Rollup, Webpack, Git.
+Docker, Docker Compose, Vite, esbuild, Rollup, Webpack, Git, Github Actions.
 ],
 )
 
@@ -78,17 +78,20 @@ Vite, esbuild, Rollup, Webpack, Git.
 
 *Template.net* is an AI-powered browser-based content creation platform serving 10M+ users, offering collaborative editors for graphics, documents, and whiteboards.
 
-- Developed and maintained a web-based graphic editor using React, TypeScript.
-- Built scalable frontend architectures using micro-frontends and Module Federation.
-- Developed the homepage using NextJSs, implementing rendering strategies and caching for performance and SEO.
-- Developed REST APIs and backend services using NodeJS, NestJS, and MySQL.
-- Implemented real-time collaboration using WebSockets for multi-user editing.
-- Worked on an asynchronous export pipeline for generating PNG, JPEG, PDF, and MP4 outputs.
-- Optimized frontend rendering, bundle size, and application performance.
-- Integrated Redis caching to improve backend efficiency.
-- Built CI/CD pipelines using GitHub Actions, AWS authentication through OIDC, and frontend deployment.
-- Collaborated with cross-functional teams to deliver end-to-end product features.
-- Used AI-assisted tools such as GitHub Copilot and Claude Code to improve development speed and code quality.
+- Developed and maintained a web-based graphic editor using *React*, *Redux*, and *TypeScript*.
+- Implemented a *feature-based architecture* to improve code modularity, maintainability, and extensibility.
+- Built scalable frontend architectures using *micro-frontends* and *Module Federation*.
+- Developed the homepage with *Next.js*, applying rendering strategies and caching to improve *performance* and *SEO*.
+- Optimized frontend rendering, *bundle size*, and overall application performance.
+- Developed *scalable and reliable backend services* using *NestJS*, *PostgreSQL*, *MongoDB*, *Redis*, and *Docker*.
+- Optimized *API performance* by reducing *response latency* and improving backend efficiency.
+- Applied *application security best practices*, including authentication, authorization, input validation, access control, and rate limiting, to protect against common vulnerabilities and secure API endpoints.
+- Implemented *real-time collaboration* using *WebSockets* to support multi-user editing.
+- Implemented *NestJS microservices* with *message queues* for reliable asynchronous processing.
+- Integrated *Redis caching* to improve backend performance and efficiency.
+- Built *CI/CD pipelines* using *GitHub Actions*, configured AWS authentication through *OIDC*.
+- Collaborated with *cross-functional teams* to deliver end-to-end product features.
+- Leveraged *AI-assisted development tools*, including *GitHub Copilot* and *Claude Code*, to accelerate development and improve code quality.
 
 #v(0.9em)
 
@@ -108,11 +111,11 @@ Vite, esbuild, Rollup, Webpack, Git.
 
 *OmiCall* is a cloud-based VoIP communication platform that helps businesses manage customer interactions through call center operations, agent management tools, real-time dashboards, and CRM-integrated workflows.
 
-- Built responsive interfaces using React and Redux.
-- Developed reusable components and integrated REST APIs.
+- Built responsive interfaces using *React*, *Redux* and *TypeScript*.
+- Developed *reusable components* and integrated *REST APIs*.
 - Maintained and fixed bugs.
 
 #v(0.6em)
 #section[Languages]
 
-- *English* — *Fluent (B2)*
+- *English* — *Upper-Intermediate (B2)*
