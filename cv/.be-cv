@@ -1,0 +1,116 @@
+#set page(
+  paper: "a4",
+  margin: (x: 1.5cm, y: 1.6cm),
+)
+
+#set text(
+  font: "Libertinus Sans",
+  size: 10pt,
+)
+
+#set par(
+  leading: 0.7em,
+)
+
+#let section(title) = [
+  #v(0.8em)
+  #text(weight: "bold", size: 13pt)[#title]
+  #line(length: 100%)
+  #v(0.3em)
+]
+
+#align(center)[
+  #text(size: 24pt, weight: "bold")[Tran Phuoc Luu] \
+  Backend Engineer \
+  Email: luutp1908\@gmail.com
+  • Phone: 0373 269 784
+  • DOB: 09/07/1999
+  • Address: 19 Ngo Be, Tan Binh, Ho Chi Minh
+]
+
+#section[Professional Summary]
+
+*Backend Engineer* with *6 years of software development experience* building scalable, reliable, and high-performance applications. Strong expertise in *NestJS*, *PostgreSQL*, *MongoDB*, and *Redis*, complemented by hands-on experience with *microservices*, *message queues*, and *Docker*. Experienced in *API performance optimization*, *application security*, and designing reliable backend systems with efficient data processing and asynchronous communication.
+
+
+#section[Technical Skills]
+#table(
+columns: (3.5cm, 1fr),
+stroke: none,
+inset: (x: 0pt, y: 3pt),
+
+[Languages], [
+TypeScript, JavaScript (ES6+), SQL, HTML5, CSS3.
+],
+
+[Backend], [
+Node.js, NestJS, REST APIs, WebSockets, BullMQ, Background Job Processing, Asynchronous Workflows.
+],
+
+[Databases & Caching], [
+PostgreSQL, MongoDB, Redis, Prisma.
+],
+
+[Build & Tools], [
+Docker, Docker Compose, Vite, esbuild, Rollup, Webpack, Git, Github Actions.
+],
+)
+
+#section[Professional Experience]
+
+#table(
+  columns: (1fr, auto),
+  stroke: none,
+  inset: 0pt,
+  [
+    #text(weight: "bold")[Template.net]
+    \
+    #text(size: 9pt, fill: rgb("#666"))[Backend Engineer]
+  ],
+  [
+    #align(right)[12/2020 – Present]
+  ],
+)
+
+*Template.net* is an AI-powered browser-based content creation platform serving 10M+ users, offering collaborative editors for graphics, documents, and whiteboards.
+
+- Developed and maintained *backend services* using *NestJS*, *PostgreSQL*, *MongoDB*, *Redis*, and *Docker*.
+- Designed and implemented *RESTful APIs* to support core application features and business logic.
+- Implemented *microservices architecture* using *NestJS* and *message queues* for reliable asynchronous processing.
+- Applied the *Transactional Outbox Pattern* to improve message delivery reliability and data consistency.
+- Optimized *API performance* by reducing response latency and improving database query efficiency.
+- Implemented *Redis caching* to reduce database load and improve API response times.
+- Integrated *OpenSearch* to enable efficient search with *full-text search*, filtering, and relevance-based results.
+- Applied *application security best practices*, including authentication, authorization, input validation, and rate limiting.
+- Implemented *real-time collaboration* using *WebSockets* to support multi-user editing.
+- Containerized backend services using *Docker* and setup deployment workflows with Github Actions.
+- Monitored *API performance metrics* to identify bottlenecks, troubleshoot issues, and improve system reliability.
+- Collaborated with *cross-functional teams* to deliver reliable end-to-end backend features.
+- Leveraged *AI-assisted development tools*, including *GitHub Copilot* and *Claude Code*, to accelerate development and improve code quality.
+
+#v(0.9em)
+
+#table(
+  columns: (1fr, auto),
+  stroke: none,
+  inset: 0pt,
+  [
+    #text(weight: "bold")[OmiCall]
+    \
+    #text(size: 9pt, fill: rgb("#666"))[Backend Developer]
+  ],
+  [
+    #align(right)[06/2020 – 10/2020]
+  ],
+)
+
+*OmiCall* is a cloud-based VoIP communication platform that helps businesses manage customer interactions through call center operations, agent management tools, real-time dashboards, and CRM-integrated workflows.
+
+- Built responsive interfaces using *React*, *Redux* and *TypeScript*.
+- Developed *reusable components* and integrated *REST APIs*.
+- Maintained and fixed bugs.
+
+#v(0.6em)
+#section[Languages]
+
+- *English* — *Upper-Intermediate (B2)*
